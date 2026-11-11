@@ -1,0 +1,59 @@
+
+[
+  {
+    "id": "health-001",
+    "category": "건강",
+    "title": "혼자 칠수있는 베드민턴",
+    "description": "일상 속 건강 관리에 도움이 되는 제품을 소개합니다.",
+    "name": "건강 관리 아이템",
+    "priceLabel": "가격 확인",
+    "emoji": "💚",
+    "background": "linear-gradient(145deg,#43876d,#152b25)",
+    "videoUrl": "/videos/health01.mp4",
+    "imageUrl": "",
+    "affiliateUrl": "https://link.coupang.com/a/iylpovRwaW",
+    "tags": ["건강", "건강관리", "일상", "케어"]
+  },
+  {
+    "id": "beauty-001",
+    "category": "미용",
+    "title": "앰플엔 펩타이드샷 앰플",
+    "description": "피부와 헤어 관리에 활용할 수 있는 뷰티 아이템을 소개합니다.",
+    "name": "뷰티 케어 아이템",
+    "priceLabel": "가격 확인",
+    "emoji": "✨",
+    "background": "linear-gradient(145deg,#a66d91,#382337)",
+     "videoUrl": "/videos/ample01.mp4",
+    "imageUrl": "",
+    "affiliateUrl": "https://link.coupang.com/a/iqmaKqQ7CC",
+    "tags": ["미용", "뷰티", "피부관리", "헤어"]
+  },
+  {
+    "id": "life-001",
+    "category": "생활",
+    "title": "매일 쓰는 생활을 편리하게",
+    "description": "자주 쓰는 공간과 일상을 간편하게 관리해요.",
+    "name": "생활 편의 아이템",
+    "priceLabel": "가격 확인",
+    "emoji": "🏡",
+    "background": "linear-gradient(145deg,#456d83,#17232c)",
+    "videoUrl": "/videos/life01.mp4",
+    "imageUrl": "/images/window-cleaner.jpg",
+    "affiliateUrl": "https://link.coupang.com/a/izdigggTMO",
+    "tags": ["생활", "편의", "일상", "청소"]
+  },
+  {
+    "id": "tools-001",
+    "category": "가전·도구",
+    "title": "생활을 편리하게 만드는 가전과 도구",
+    "description": "집에서 유용하게 사용할 수 있는 가전·도구 아이템입니다.",
+    "name": "가전·도구 아이템",
+    "priceLabel": "가격 확인",
+    "emoji": "🛠️",
+    "background": "linear-gradient(145deg,#66558d,#211a31)",
+    "videoUrl": "/videos/tools01.mp4",
+    "imageUrl": "",
+    "affiliateUrl": "https://link.coupang.com/a/izc4vXrhim",
+    "tags": ["가전", "도구", "생활가전", "편리"]
+  }
+]
