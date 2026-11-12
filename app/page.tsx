@@ -267,7 +267,7 @@ return (
   style={{
     position: "absolute",
     right: "12px",
-    bottom: "80px",
+    bottom: "-60px",
     display: "flex",
     flexDirection: "row",
     alignItems: "center",
@@ -275,6 +275,7 @@ return (
     zIndex: 50,
   }}
 >
+
   <button
     className="shortLikeButton"
     type="button"
