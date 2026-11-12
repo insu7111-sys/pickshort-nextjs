@@ -58,6 +58,14 @@ function AutoPlayVideo({
 
 const [isMuted, setIsMuted] = useState(true);
 
+useEffect(() => {
+  const savedSound = localStorage.getItem("pickshort-sound");
+
+  if (savedSound === "on") {
+    setIsMuted(false);
+  }
+}, []);
+
 const [isLiked, setIsLiked] = useState(false);
 
 const [likesLoaded, setLikesLoaded] = useState(false);
@@ -143,34 +151,29 @@ const toggleSound = () => {
   if (!video) return;
 
   const nextMuted = !video.muted;
+
   video.muted = nextMuted;
   setIsMuted(nextMuted);
+
+  localStorage.setItem(
+    "pickshort-sound",
+    nextMuted ? "off" : "on"
+  );
+
+  if (!nextMuted) {
+    video.play().catch(() => {
+      // 브라우저가 재생을 차단하면 사용자 조작을 기다립니다.
+    });
+  }
 };
 
-// 영상 정지 시 자동 음소거
+// 영상 자동재생 관리
 useEffect(() => {
   const video = videoRef.current;
   if (!video) return;
 
-  const handlePause = () => {
-    video.muted = true;
-    setIsMuted(true);
-  };
-
-  video.addEventListener("pause", handlePause);
-
-  return () => {
-    video.removeEventListener("pause", handlePause);
-  };
-}, []);
-
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // 모든 쇼츠 영상 중 하나만 재생
-    const updatePlayback = () => {
+  // 모든 쇼츠 영상 중 하나만 재생
+  const updatePlayback = () => {
       const videos = Array.from(
         document.querySelectorAll<HTMLVideoElement>(
           ".videoFrame video.video"
