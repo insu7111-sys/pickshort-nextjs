@@ -558,3 +558,11 @@
   }
 
 }
+/* 픽숏 영상 하단 반투명 배경 제거 */
+@media (max-width: 768px) {
+  .videoCaption {
+    background: transparent !important;
+    bottom: 52px;
+    text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
+  }
+}
