@@ -569,6 +569,7 @@
 }
 
 /* 픽숏 모바일 쇼츠 하단 버튼 배치 */
+
 @media (max-width: 768px) {
 
   /* 영상 아래 버튼 공간 확보 */
@@ -586,16 +587,54 @@
     z-index: 45 !important;
   }
 
-  /* 좋아요, 공유, 소리 버튼 */
-  /* 버튼 3개의 위치는 shortActionGroup에서 관리 */
-.shortLikeButton,
-.shortShareButton,
-.shortSoundButton {
-  position: static !important;
-  top: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  transform: none !important;
+  /* 좋아요, 공유, 소리 버튼 위치 유지 */
+  .shortLikeButton,
+  .shortShareButton,
+  .shortSoundButton {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: none !important;
+  }
+
+  /* 모바일 버튼 사이 간격 */
+  .shortActionGroup {
+    gap: 10px !important;
+  }
+
 }
 
+
+/* 픽숏 모바일 영상 너비 개선 */
+@media (max-width: 768px) {
+  .videoFrame {
+    width: 100%;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+
+/* 픽숏 모바일 상품 설명 위치 개선 */
+@media (max-width: 768px) {
+  .videoCaption {
+    left: 95px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100% - 107px);
+    box-sizing: border-box;
+  }
+
+  .videoCaption h2 {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  .videoCaption p {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: break-word;
+  }
 }
