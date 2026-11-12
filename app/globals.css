@@ -558,6 +558,7 @@
   }
 
 }
+
 /* 픽숏 영상 하단 반투명 배경 제거 */
 @media (max-width: 768px) {
   .videoCaption {
@@ -565,16 +566,18 @@
     bottom: 52px;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
   }
-}/* 픽숏 모바일 쇼츠 하단 버튼 배치 */
+}
+
+/* 픽숏 모바일 쇼츠 하단 버튼 배치 */
 @media (max-width: 768px) {
 
-  /* 영상 아래쪽에 버튼을 배치할 공간 확보 */
+  /* 영상 아래 버튼 공간 확보 */
   .videoFrame {
     overflow: visible;
     margin-bottom: 80px;
   }
 
-  /* 상품 이미지 버튼을 영상 아래 왼쪽으로 이동 */
+  /* 쇼핑 이미지 위치 유지 */
   .videoFrame a[aria-label$="쿠팡 쇼핑하기"] {
     top: calc(100% - 177px) !important;
     left: 12px !important;
@@ -583,25 +586,16 @@
     z-index: 45 !important;
   }
 
-  /* 좋아요, 공유, 소리 버튼을 영상 아래 오른쪽으로 이동 */
-  .shortLikeButton,
-  .shortShareButton,
-  .shortSoundButton {
-    top: calc(100% - 7px) !important;
-    bottom: auto !important;
-    transform: none !important;
-    z-index: 45 !important;
-  }
+  /* 좋아요, 공유, 소리 버튼 */
+  /* 버튼 3개의 위치는 shortActionGroup에서 관리 */
+.shortLikeButton,
+.shortShareButton,
+.shortSoundButton {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
 
-  .shortLikeButton {
-    right: 116px !important;
-  }
-
-  .shortShareButton {
-    right: 64px !important;
-  }
-
-  .shortSoundButton {
-    right: 12px !important;
-  }
 }
