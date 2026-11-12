@@ -565,4 +565,43 @@
     bottom: 52px;
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
   }
+}/* 픽숏 모바일 쇼츠 하단 버튼 배치 */
+@media (max-width: 768px) {
+
+  /* 영상 아래쪽에 버튼을 배치할 공간 확보 */
+  .videoFrame {
+    overflow: visible;
+    margin-bottom: 80px;
+  }
+
+  /* 상품 이미지 버튼을 영상 아래 왼쪽으로 이동 */
+  .videoFrame a[aria-label$="쿠팡 쇼핑하기"] {
+    top: calc(100% - 177px) !important;
+    left: 12px !important;
+    right: auto !important;
+    bottom: auto !important;
+    z-index: 45 !important;
+  }
+
+  /* 좋아요, 공유, 소리 버튼을 영상 아래 오른쪽으로 이동 */
+  .shortLikeButton,
+  .shortShareButton,
+  .shortSoundButton {
+    top: calc(100% - 7px) !important;
+    bottom: auto !important;
+    transform: none !important;
+    z-index: 45 !important;
+  }
+
+  .shortLikeButton {
+    right: 116px !important;
+  }
+
+  .shortShareButton {
+    right: 64px !important;
+  }
+
+  .shortSoundButton {
+    right: 12px !important;
+  }
 }
