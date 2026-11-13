@@ -638,3 +638,73 @@
     overflow-wrap: break-word;
   }
 }
+
+/* 픽숏 수수료 안내 문구 */
+.videoFrame .commissionLabel {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 55;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+
+/* 픽숏 채널 구독·알림 영역 */
+.channelSubscribe {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  background: #15191f;
+  color: #ffffff;
+}
+
+.channelIdentity,
+.channelActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.channelAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffcf33;
+  color: #111111;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.channelName {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.channelSubscribeButton {
+  border: none;
+  border-radius: 20px;
+  padding: 8px 15px;
+  background: #ffffff;
+  color: #111111;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.channelNotifyButton {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #444;
+  border-radius: 50%;
+  background: #252a32;
+  color: #ffffff;
+  cursor: pointer;
+}

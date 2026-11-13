@@ -347,6 +347,44 @@ export default function Home() {
   const [category, setCategory] = useState("전체");
   const [search, setSearch] = useState("");
 
+  // 픽숏 구독 및 알림 상태
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isNotifyEnabled, setIsNotifyEnabled] = useState(false);
+
+  // 저장된 구독 및 알림 상태 불러오기
+  useEffect(() => {
+    setIsSubscribed(
+      localStorage.getItem("pickshort-subscribed") === "true"
+    );
+
+    setIsNotifyEnabled(
+      localStorage.getItem("pickshort-notify") === "true"
+    );
+  }, []);
+
+  // 구독 버튼 클릭
+  const toggleSubscribe = () => {
+    const next = !isSubscribed;
+
+    setIsSubscribed(next);
+    localStorage.setItem("pickshort-subscribed", String(next));
+
+    if (!next) {
+      setIsNotifyEnabled(false);
+      localStorage.setItem("pickshort-notify", "false");
+    }
+  };
+
+  // 알림 설정 버튼 클릭
+  const toggleNotify = () => {
+    if (!isSubscribed) return;
+
+    const next = !isNotifyEnabled;
+
+    setIsNotifyEnabled(next);
+    localStorage.setItem("pickshort-notify", String(next));
+  };
+
 const [likedIds, setLikedIds] = useState<string[]>([]);
 
 useEffect(() => {
@@ -574,16 +612,54 @@ const categoryMatch =
 
                     
 
-                    <div className="videoCaption">
-                      <h2>{p.title}</h2>
-                      <p>{p.description}</p>
-                    </div>
-                  </div>
+                    
 
-                  <div className="productInfo">
-                    <div className="productName">
-                      {p.name}
-                    </div>
+
+
+<div className="videoCaption">
+  <h2>{p.title}</h2>
+  <p>{p.description}</p>
+</div>
+
+<div className="commissionLabel">
+  <span>♧ 수수료 지급</span>
+</div>
+
+</div>
+
+
+<div className="channelSubscribe">
+  <div className="channelIdentity">
+    <span className="channelAvatar">픽숏</span>
+    <span className="channelName">@픽숏</span>
+  </div>
+
+  <div className="channelActions">
+    <button
+      type="button"
+      className="channelSubscribeButton"
+      onClick={toggleSubscribe}
+      aria-pressed={isSubscribed}
+    >
+      {isSubscribed ? "구독 중" : "구독"}
+    </button>
+
+    <button
+      type="button"
+      className="channelNotifyButton"
+      onClick={toggleNotify}
+      disabled={!isSubscribed}
+      aria-label={isNotifyEnabled ? "알림 끄기" : "알림 켜기"}
+      aria-pressed={isNotifyEnabled}
+      title={isSubscribed ? "알림 설정" : "먼저 구독해 주세요"}
+    >
+      {isNotifyEnabled ? "🔔" : "🔕"}
+    </button>
+  </div>
+</div>
+
+
+<div className="productInfo">
 
                     <div className="productMeta">
                       <span className="price">
