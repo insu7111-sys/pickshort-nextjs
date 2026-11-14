@@ -123,15 +123,14 @@ window.dispatchEvent(new Event("pickshort-likes-updated"));
 const shareVideo = async () => {
   const url = window.location.href;
 
+  
   try {
     if (navigator.share) {
       await navigator.share({
         title: name,
         url,
       });
-    } else {
-      await navigator.clipboard.writeText(url);
-      alert("픽숏 사이트 주소가 복사되었습니다.");
+      return;
     }
   } catch (error) {
     if (
@@ -141,9 +140,22 @@ const shareVideo = async () => {
       return;
     }
 
-    alert("공유에 실패했습니다. 다시 시도해 주세요.");
+    console.warn("기본 공유 실패, 링크 복사 시도:", error);
+  }
+
+  // 기본 공유를 사용할 수 없으면 링크 복사
+  try {
+    await navigator.clipboard.writeText(url);
+    alert("픽숏 공유 링크가 복사되었습니다.");
+  } catch (error) {
+    console.error("링크 복사 실패:", error);
+    window.prompt(
+      "아래 주소를 복사해서 공유해 주세요.",
+      url
+    );
   }
 };
+
 
 // 소리 켜기 / 끄기 버튼
 const toggleSound = () => {
