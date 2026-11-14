@@ -708,3 +708,197 @@
   color: #ffffff;
   cursor: pointer;
 }
+
+/* 픽숏 모바일 스크롤 사용성 개선 */
+@media (max-width: 768px) {
+  html {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 75px;
+  }
+
+  .shortCard {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+}
+
+/* 픽숏 모바일 스크롤 강제 정렬 해제 */
+@media (max-width: 768px) {
+  html {
+    scroll-snap-type: none !important;
+    scroll-behavior: auto;
+  }
+
+  .shortCard {
+    scroll-snap-align: none !important;
+    scroll-snap-stop: normal !important;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+}
+
+/* 픽숏 모바일 카드 간격 개선 */
+@media (max-width: 768px) {
+
+  /* 쇼츠 카드 사이 간격 */
+  .feed {
+    gap: 14px;
+  }
+
+  /* 카드 모서리 */
+  .shortCard {
+    border-radius: 16px;
+  }
+
+  /* 구독 및 알림 영역 */
+  .channelSubscribe {
+    padding: 12px 14px;
+    min-height: 60px;
+  }
+
+  /* 상품 정보 영역 */
+  .productInfo {
+    padding: 12px 14px 14px;
+  }
+
+  /* 상품 가격과 구매 버튼 간격 */
+  .productMeta {
+    margin-top: 8px;
+    gap: 10px;
+  }
+
+  /* 상품 안내 문구 */
+  .finePrint {
+    margin-top: 10px;
+  }
+}
+
+/* 픽숏 모바일 영상 설명 가독성 개선 */
+@media (max-width: 768px) {
+
+  .videoCaption {
+    left: 95px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: calc(100% - 107px);
+    padding: 10px 0 12px;
+    box-sizing: border-box;
+  }
+
+  .videoCaption h2 {
+    font-size: 16px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .videoCaption p {
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* 픽숏 모바일 버튼 한 줄 배치 */
+@media (max-width: 768px) {
+
+  /* 영상 아래 버튼 공간 */
+  .videoFrame {
+    margin-bottom: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* 좋아요·공유·소리 버튼 */
+  .shortActionGroup {
+    bottom: -60px !important;
+    right: 12px !important;
+    gap: 8px !important;
+  }
+
+  .shortLikeButton,
+  .shortShareButton,
+  .shortSoundButton {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 19px !important;
+  }
+
+  /* 구독·알림 버튼을 같은 높이로 이동 */
+  .channelSubscribe {
+    position: relative;
+    min-height: 64px;
+    padding: 10px 12px;
+    justify-content: flex-start;
+  }
+
+  /* 채널 이름은 모바일에서 숨기기 */
+  .channelIdentity {
+    display: none;
+  }
+
+  /* 구독·알림 버튼을 왼쪽에 배치 */
+  .channelActions {
+    gap: 5px;
+    margin-right: auto;
+  }
+
+  .channelSubscribeButton {
+    padding: 8px 10px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .channelNotifyButton {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+}
+
+/* 픽숏 모바일 버튼 간격 최종 조정 */
+@media (max-width: 768px) {
+  .channelSubscribe {
+    min-width: 0;
+    padding: 10px 12px;
+  }
+
+  .channelActions {
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .shortActionGroup {
+    gap: 8px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .channelSubscribe {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .channelSubscribeButton {
+    padding: 7px 8px;
+    font-size: 10px;
+  }
+
+  .channelNotifyButton {
+    width: 30px;
+    height: 30px;
+  }
+
+  .shortActionGroup {
+    right: 8px !important;
+    gap: 5px !important;
+  }
+
+  .shortLikeButton,
+  .shortShareButton,
+  .shortSoundButton {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 17px !important;
+  }
+}
