@@ -58,6 +58,8 @@ function AutoPlayVideo({
 
 const [isMuted, setIsMuted] = useState(true);
 
+const [shareToast, setShareToast] = useState(false);
+
 useEffect(() => {
   const savedSound = localStorage.getItem("pickshort-sound");
 
@@ -120,10 +122,10 @@ window.dispatchEvent(new Event("pickshort-likes-updated"));
 };
 
 
+
 const shareVideo = async () => {
   const url = window.location.href;
 
-  
   try {
     if (navigator.share) {
       await navigator.share({
@@ -143,18 +145,21 @@ const shareVideo = async () => {
     console.warn("기본 공유 실패, 링크 복사 시도:", error);
   }
 
-  // 기본 공유를 사용할 수 없으면 링크 복사
   try {
     await navigator.clipboard.writeText(url);
-    alert("픽숏 공유 링크가 복사되었습니다.");
+
+    setShareToast(true);
+
   } catch (error) {
     console.error("링크 복사 실패:", error);
+
     window.prompt(
       "아래 주소를 복사해서 공유해 주세요.",
       url
     );
   }
 };
+
 
 
 // 소리 켜기 / 끄기 버튼
@@ -273,7 +278,31 @@ return (
       aria-label={`${name} 소개 영상`}
     />
 
-    
+ 
+{shareToast && (
+  <div
+    role="status"
+    style={{
+      position: "fixed",
+      bottom: "30px",
+      left: "50%",
+      transform: "translateX(-50%)",
+      background: "rgba(20, 20, 20, 0.95)",
+      color: "#ffffff",
+      padding: "12px 18px",
+      borderRadius: "12px",
+      fontSize: "14px",
+      fontWeight: 600,
+      zIndex: 9999,
+      boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+      textAlign: "center",
+      maxWidth: "90vw",
+    }}
+  >
+    ✅ 픽숏 공유 링크가 복사되었습니다!
+  </div>
+)}
+   
 <div
   className="shortActionGroup"
   style={{
