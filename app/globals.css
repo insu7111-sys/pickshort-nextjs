@@ -902,3 +902,31 @@
     font-size: 17px !important;
   }
 }
+
+/* 픽숏 모바일 쇼츠 자동 정렬 */
+@media (max-width: 768px) {
+
+  html {
+    scroll-snap-type: y proximity !important;
+    scroll-padding-top: 140px;
+  }
+
+  .shortCard {
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
+  }
+}
+
+/* 픽숏 모바일 쇼츠 자동 정렬 개선 */
+@media (max-width: 768px) {
+
+  html {
+    scroll-snap-type: y mandatory !important;
+    scroll-padding-top: 75px;
+  }
+
+  .shortCard {
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always !important;
+  }
+}
