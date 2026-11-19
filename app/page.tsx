@@ -126,6 +126,7 @@ window.dispatchEvent(new Event("pickshort-likes-updated"));
 
 
 
+
 const shareVideo = async () => {
   const url = window.location.href;
 
@@ -150,9 +151,7 @@ const shareVideo = async () => {
 
   try {
     await navigator.clipboard.writeText(url);
-
     setShareToast(true);
-
   } catch (error) {
     console.error("링크 복사 실패:", error);
 
@@ -162,10 +161,6 @@ const shareVideo = async () => {
     );
   }
 };
-
-
-
-
 
 /* 영상 클릭 시 재생 / 일시정지 */
 const toggleVideoPlayback = () => {
