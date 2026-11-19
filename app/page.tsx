@@ -6,6 +6,9 @@ import { useMemo, useState, useEffect, useRef } from "react";
 
 import products from "../data/products.json";
 
+import { createClient } from "@/utils/supabase/client";
+
+
 type Product = {
   id: string;
   category: string;
@@ -54,8 +57,8 @@ function AutoPlayVideo({
 
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-
-
+const manuallyPausedRef = useRef(false);
+const [isPaused, setIsPaused] = useState(false);
 const [isMuted, setIsMuted] = useState(true);
 
 const [shareToast, setShareToast] = useState(false);
@@ -162,6 +165,32 @@ const shareVideo = async () => {
 
 
 
+
+
+/* 영상 클릭 시 재생 / 일시정지 */
+const toggleVideoPlayback = () => {
+  const video = videoRef.current;
+
+  if (!video) return;
+
+  if (video.paused) {
+    manuallyPausedRef.current = false;
+
+    video.play()
+      .then(() => {
+        setIsPaused(false);
+      })
+      .catch((error) => {
+        console.error("영상 재생 실패:", error);
+      });
+  } else {
+    manuallyPausedRef.current = true;
+    video.pause();
+    setIsPaused(true);
+  }
+};
+
+
 // 소리 켜기 / 끄기 버튼
 const toggleSound = () => {
   const video = videoRef.current;
@@ -221,18 +250,22 @@ useEffect(() => {
       });
 
       videos.forEach((item) => {
-        if (item === bestVideo) {
-          if (item.paused) {
-            item.play().catch(() => {});
-          }
-        } else {
-          if (!item.paused) {
-            item.pause();
-          }
-        }
-      });
-    };
+       
+if (item === bestVideo) {
+  if (item === video && manuallyPausedRef.current) {
+    return;
+  }
 
+  if (item.paused) {
+    item.play().catch(() => {});
+  }
+} else {
+  if (!item.paused) {
+    item.pause();
+  }
+}
+});
+};
     // 스크롤하거나 화면 크기가 바뀔 때 확인
     window.addEventListener("scroll", updatePlayback, {
       passive: true,
@@ -265,18 +298,49 @@ return (
       height: "100%",
     }}
   >
-    <video
-      ref={videoRef}
-      className="video"
-      src={src}
-      poster={poster}
-      controls
-      playsInline
-      muted={isMuted}
-      loop
-      preload="metadata"
-      aria-label={`${name} 소개 영상`}
-    />
+    
+<video
+  ref={videoRef}
+  className="video"
+  src={src}
+  poster={poster}
+  onClick={toggleVideoPlayback}
+  playsInline
+  muted={isMuted}
+  loop
+  preload="metadata"
+  aria-label={`${name} 소개 영상`}
+/>
+
+{/* 영상 일시정지 시 중앙 재생 버튼 */}
+{isPaused && (
+  <button
+    type="button"
+    onClick={toggleVideoPlayback}
+    aria-label="영상 다시 재생"
+    style={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "72px",
+      height: "72px",
+      borderRadius: "50%",
+      border: "2px solid rgba(255,255,255,0.8)",
+      background: "rgba(0,0,0,0.65)",
+      color: "#ffffff",
+      fontSize: "30px",
+      cursor: "pointer",
+      zIndex: 30,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+  >
+    ▶
+  </button>
+)}
+
 
  
 {shareToast && (
@@ -385,6 +449,44 @@ return (
 
 
 export default function Home() {
+
+const [supabaseProducts, setSupabaseProducts] = useState<Product[]>([]);
+
+useEffect(() => {
+  const loadSupabaseProducts = async () => {
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+      .from("products")
+      .select("*")
+      .eq("is_published", true);
+
+    if (error) {
+      console.error("상품 불러오기 실패:", error.message);
+      return;
+    }
+
+    const newProducts: Product[] = (data ?? []).map((item) => ({
+      id: item.id,
+      category: item.category ?? "생활",
+      title: item.title ?? "",
+      description: item.description ?? "",
+      name: item.name ?? item.title ?? "",
+      priceLabel: item.price_label ?? "가격 확인",
+      emoji: item.emoji ?? "🛒",
+      background: item.background ?? "#f5f5f5",
+      videoUrl: item.video_url ?? "",
+      imageUrl: item.image_url ?? undefined,
+      affiliateUrl: item.affiliate_url ?? "",
+      tags: Array.isArray(item.tags) ? item.tags : [],
+    }));
+
+    setSupabaseProducts(newProducts);
+  };
+
+  loadSupabaseProducts();
+}, []);
+
   const [category, setCategory] = useState("전체");
   const [search, setSearch] = useState("");
 
@@ -458,7 +560,18 @@ useEffect(() => {
   };
 }, []);
 
-  const items = products as Product[];
+ 
+const items = useMemo(() => {
+  const allProducts = [
+    ...(products as Product[]),
+    ...supabaseProducts,
+  ];
+
+  return Array.from(
+    new Map(allProducts.map((p) => [p.id, p])).values()
+  );
+}, [supabaseProducts]);
+
 
   const filtered = useMemo(() => {
     const q = search.trim().toLocaleLowerCase();

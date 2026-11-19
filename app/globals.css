@@ -917,16 +917,117 @@
   }
 }
 
-/* 픽숏 모바일 쇼츠 자동 정렬 개선 */
-@media (max-width: 768px) {
 
+/* 픽숏 모바일 쇼츠 부드러운 스크롤 */
+@media (max-width: 768px) {
   html {
-    scroll-snap-type: y mandatory !important;
-    scroll-padding-top: 75px;
+    scroll-snap-type: none !important;
+    scroll-behavior: auto;
   }
 
   .shortCard {
-    scroll-snap-align: start !important;
-    scroll-snap-stop: always !important;
+    scroll-snap-align: none !important;
+    scroll-snap-stop: normal !important;
+  }
+}
+
+/* 픽숏 모바일 좋아요·공유·소리 버튼 정렬 */
+@media (max-width: 768px) {
+
+  /* 영상 아래 버튼을 표시할 공간 */
+  .channelSubscribe {
+    position: relative;
+    min-height: 64px;
+    padding: 10px 12px;
+  }
+
+  /* 버튼 3개를 오른쪽에 가로 정렬 */
+  .shortActionGroup {
+    position: absolute !important;
+    top: auto !important;
+    right: 12px !important;
+    bottom: -60px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    z-index: 50 !important;
+  }
+
+  /* 버튼 크기 통일 */
+  .shortLikeButton,
+  .shortShareButton,
+  .shortSoundButton {
+    position: static !important;
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 19px !important;
+    flex-shrink: 0;
+  }
+}
+
+/* 픽숏 모바일 영상 제목 겹침 개선 */
+@media (max-width: 768px) {
+
+  /* 영상 제목과 설명 위치 */
+  .videoCaption {
+    bottom: 65px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    padding: 14px !important;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.65) !important;
+    z-index: 10;
+    pointer-events: none;
+  }
+
+  /* 영상 제목 */
+  .videoCaption h2 {
+    font-size: 17px !important;
+    line-height: 1.4;
+    margin-bottom: 5px;
+  }
+
+  /* 영상 설명 */
+  .videoCaption p {
+    font-size: 12px !important;
+    line-height: 1.5;
+  }
+}
+
+/* 픽숏 모바일 상품 구매 영역 하단 여백 개선 */
+@media (max-width: 768px) {
+
+  .shortCard {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .productInfo {
+    position: relative !important;
+    padding: 12px 14px 24px !important;
+    min-height: 90px;
+  }
+
+  .productMeta {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .buyButton {
+    position: relative !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .finePrint {
+    margin-top: 10px !important;
+    line-height: 1.5;
   }
 }

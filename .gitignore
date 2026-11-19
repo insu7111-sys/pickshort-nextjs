@@ -1,0 +1,21 @@
+
+# Next.js
+node_modules/
+.next/
+out/
+.vercel/
+
+# 환경변수 및 비밀 설정
+.env
+.env.*
+!.env.example
+
+# 관리자 메모 및 백업
+admin-code.txt
+app/admin/page.backup.txt
+
+# 자동 생성 파일
+*.tsbuildinfo
+
+# 기타
+.DS_Store
