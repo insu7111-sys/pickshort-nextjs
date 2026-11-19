@@ -364,16 +364,18 @@ return (
    
 <div
   className="shortActionGroup"
-  style={{
-    position: "absolute",
-    right: "12px",
-    bottom: "-60px",
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: "10px",
-    zIndex: 50,
-  }}
+ 
+style={{
+  position: "absolute",
+  right: "12px",
+  bottom: "20px",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "10px",
+  zIndex: 50,
+}}
+
 >
 
   <button
