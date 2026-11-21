@@ -31,6 +31,9 @@ const [editCategory, setEditCategory] = useState("건강");
 const [editDescription, setEditDescription] = useState("");
 const [editAffiliateUrl, setEditAffiliateUrl] = useState("");
 
+const [editVideoFile, setEditVideoFile] = useState<File | null>(null);
+const [editImageFile, setEditImageFile] = useState<File | null>(null);
+
 
 const loadProducts = async () => {
   const { data, error } = await supabase
@@ -72,15 +75,16 @@ useEffect(() => {
       return;
     }
 
-    const { data: adminData, error: adminError } = await supabase
-      .from("admin_users")
-      .select("user_id")
-      .eq("user_id", userData.user.id)
-      .maybeSingle();
+    const { data: adminData, error: adminError } =
+  await supabase.rpc("is_admin");
 
-    if (!adminError && adminData) {
-      setIsAdmin(true);
-    }
+if (adminError) {
+  console.error("관리자 권한 확인 실패:", adminError.message);
+}
+
+if (!adminError && adminData === true) {
+  setIsAdmin(true);
+}
 
     setAuthLoading(false);
   };
@@ -202,6 +206,7 @@ alert("상품이 성공적으로 등록되었습니다!");
 ;
 };
 
+
 const handleUpdateProduct = async () => {
   if (!editingProductId) {
     alert("수정할 상품을 선택해주세요.");
@@ -218,14 +223,109 @@ const handleUpdateProduct = async () => {
     return;
   }
 
+  const currentProduct = productList.find(
+    (product) => product.id === editingProductId
+  );
+
+  if (!currentProduct) {
+    alert("상품 정보를 찾을 수 없습니다.");
+    return;
+  }
+
+  const updates: {
+    title: string;
+    category: string;
+    description: string;
+    affiliate_url: string;
+    video_url?: string;
+    image_url?: string;
+  } = {
+    title: editTitle.trim(),
+    category: editCategory,
+    description: editDescription.trim(),
+    affiliate_url: editAffiliateUrl.trim(),
+  };
+
+  // 새 영상이 선택된 경우에만 업로드
+  
+  if (editVideoFile) {
+    if (
+      editVideoFile.type !== "video/mp4" ||
+      !editVideoFile.name.toLowerCase().endsWith(".mp4")
+    ) {
+      alert("MP4 영상만 업로드할 수 있습니다.");
+      return;
+    }
+
+    if (editVideoFile.size > 50 * 1024 * 1024) {
+      alert("영상은 50MB 이하로 선택해주세요.");
+      return;
+    }
+
+    const videoPath = `${crypto.randomUUID()}.mp4`;
+
+    const { error: videoError } = await supabase.storage
+      .from("product-videos")
+      .upload(videoPath, editVideoFile, {
+        contentType: "video/mp4",
+      });
+
+    if (videoError) {
+      alert("영상 업로드 실패: " + videoError.message);
+      return;
+    }
+
+    const { data: videoData } = supabase.storage
+      .from("product-videos")
+      .getPublicUrl(videoPath);
+
+    updates.video_url = videoData.publicUrl;
+  }
+
+  // 새 이미지가 선택된 경우에만 업로드
+  if (editImageFile) {
+    const allowedImageTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (!allowedImageTypes.includes(editImageFile.type)) {
+      alert("JPG, PNG, WEBP 이미지만 업로드할 수 있습니다.");
+      return;
+    }
+
+    const extension =
+      editImageFile.type === "image/png"
+        ? "png"
+        : editImageFile.type === "image/webp"
+          ? "webp"
+          : "jpg";
+
+    const imagePath = `${crypto.randomUUID()}.${extension}`;
+
+    const { error: imageError } = await supabase.storage
+      .from("product-images")
+      .upload(imagePath, editImageFile, {
+        contentType: editImageFile.type,
+      });
+
+    if (imageError) {
+      alert("이미지 업로드 실패: " + imageError.message);
+      return;
+    }
+
+    const { data: imageData } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(imagePath);
+
+    updates.image_url = imageData.publicUrl;
+  }
+
+  // 상품 정보와 새 영상·이미지 주소 저장
   const { data, error } = await supabase
     .from("products")
-    .update({
-      title: editTitle.trim(),
-      category: editCategory,
-      description: editDescription.trim(),
-      affiliate_url: editAffiliateUrl.trim(),
-    })
+    .update(updates)
     .eq("id", editingProductId)
     .select("id");
 
@@ -240,10 +340,15 @@ const handleUpdateProduct = async () => {
   }
 
   await loadProducts();
-  setEditingProductId(null);
 
-  alert("상품 정보가 성공적으로 수정되었습니다!");
+  setEditingProductId(null);
+  setEditVideoFile(null);
+  setEditImageFile(null);
+
+  alert("상품 정보와 선택한 파일이 저장되었습니다!");
 };
+
+
 
 
 const handleDeleteProduct = async (productId: string) => {
@@ -251,9 +356,49 @@ const handleDeleteProduct = async (productId: string) => {
     "정말 이 상품을 삭제하시겠습니까?\n삭제한 상품은 복구할 수 없습니다."
   );
 
-  if (!confirmed) {
+  if (!confirmed) return;
+
+  const { data: product, error: fetchError } = await supabase
+    .from("products")
+    .select("id, video_url, image_url")
+    .eq("id", productId)
+    .single();
+
+  if (fetchError || !product) {
+    alert("상품 정보를 불러오지 못했습니다.");
     return;
   }
+
+  const getStoragePath = (
+    url: string | null,
+    bucket: string
+  ) => {
+    if (!url) return null;
+
+    try {
+      const parsedUrl = new URL(url);
+      const marker = `/storage/v1/object/public/${bucket}/`;
+
+      const index = parsedUrl.pathname.indexOf(marker);
+      if (index === -1) return null;
+
+      return decodeURIComponent(
+        parsedUrl.pathname.slice(index + marker.length)
+      );
+    } catch {
+      return null;
+    }
+  };
+
+  const videoPath = getStoragePath(
+    product.video_url,
+    "product-videos"
+  );
+
+  const imagePath = getStoragePath(
+    product.image_url,
+    "product-images"
+  );
 
   const { data, error } = await supabase
     .from("products")
@@ -267,14 +412,87 @@ const handleDeleteProduct = async (productId: string) => {
   }
 
   if (!data || data.length === 0) {
-    alert("상품이 삭제되지 않았습니다. 관리자 권한을 확인해주세요.");
+    alert("상품이 삭제되지 않았습니다.");
     return;
   }
 
-  alert("상품이 성공적으로 삭제되었습니다!");
+  const cleanupFile = async (
+    bucket: string,
+    path: string | null,
+    column: "video_url" | "image_url"
+  ) => {
+    if (!path) return null;
+
+    const { data: remaining, error: checkError } =
+      await supabase
+        .from("products")
+        .select(column)
+        .not(column, "is", null);
+
+    if (checkError) {
+      return `${bucket}: 파일 사용 여부 확인 실패`;
+    }
+
+    
+const fileIsUsed = (remaining ?? []).some((item) => {
+  const url =
+    column === "video_url"
+      ? ("video_url" in item ? item.video_url : null)
+      : ("image_url" in item ? item.image_url : null);
+
+  return getStoragePath(url, bucket) === path;
+});
+
+
+
+    if (fileIsUsed) return null;
+
+    const { error: removeError } = await supabase.storage
+      .from(bucket)
+      .remove([path]);
+
+    if (removeError) {
+      return `${bucket}: ${removeError.message}`;
+    }
+
+    return null;
+  };
+
+  const cleanupErrors: string[] = [];
+
+  const videoCleanupError = await cleanupFile(
+    "product-videos",
+    videoPath,
+    "video_url"
+  );
+
+  if (videoCleanupError) {
+    cleanupErrors.push(videoCleanupError);
+  }
+
+  const imageCleanupError = await cleanupFile(
+    "product-images",
+    imagePath,
+    "image_url"
+  );
+
+  if (imageCleanupError) {
+    cleanupErrors.push(imageCleanupError);
+  }
 
   await loadProducts();
+
+  if (cleanupErrors.length > 0) {
+    alert(
+      "상품 정보는 삭제되었습니다.\n" +
+      "다만 일부 파일은 정리하지 못했습니다:\n" +
+      cleanupErrors.join("\n")
+    );
+  } else {
+    alert("상품이 삭제되었습니다. 연결된 파일 정리도 완료했습니다.");
+  }
 };
+
 const handleTogglePublished = async (
   productId: string,
   currentStatus: boolean
@@ -534,6 +752,10 @@ onClick={() => {
   setEditCategory(product.category ?? "건강");
   setEditDescription(product.description ?? "");
   setEditAffiliateUrl(product.affiliate_url ?? "");
+
+setEditVideoFile(null);
+setEditImageFile(null);
+
 }}
 
   style={{
@@ -623,17 +845,35 @@ onClick={() => {
       />
     </label>
 
-    <button
-      type="button"
-      onClick={() => setEditingProductId(null)}
-      style={{
-        padding: 12,
-        background: "#eee",
-        border: "none",
-        borderRadius: 8,
-        cursor: "pointer",
-      }}
-    >
+    
+  
+<label>
+  쇼츠 영상 교체 (MP4)
+  <input
+    type="file"
+    accept="video/mp4"
+    onChange={(e) => {
+      setEditVideoFile(e.target.files?.[0] ?? null);
+    }}
+    style={inputStyle}
+  />
+</label>
+
+<label>
+  상품 이미지 교체
+  <input
+    type="file"
+    accept="image/*"
+    onChange={(e) => {
+      setEditImageFile(e.target.files?.[0] ?? null);
+    }}
+    style={inputStyle}
+  />
+</label>
+
+<p style={{ fontSize: 13, color: "#666" }}>
+  파일을 선택하지 않으면 기존 영상과 이미지가 유지됩니다.
+</p>
 
 <button
   type="button"
@@ -650,8 +890,21 @@ onClick={() => {
   💾 수정 내용 저장
 </button>
 
-      취소
-    </button>
+
+<button
+  type="button"
+  onClick={() => setEditingProductId(null)}
+  style={{
+    padding: 12,
+    background: "#eee",
+    border: "none",
+    borderRadius: 8,
+    cursor: "pointer",
+  }}
+>
+  취소
+</button>
+
   </div>
 )}
 
