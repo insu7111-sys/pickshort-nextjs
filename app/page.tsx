@@ -208,81 +208,111 @@ const toggleSound = () => {
   }
 };
 
-// 영상 자동재생 관리
+
+/* 173단계 - 픽숏 쇼츠 자동 재생 개선 */
 useEffect(() => {
   const video = videoRef.current;
   if (!video) return;
 
-  // 모든 쇼츠 영상 중 하나만 재생
+  let animationFrame = 0;
+
   const updatePlayback = () => {
-      const videos = Array.from(
-        document.querySelectorAll<HTMLVideoElement>(
-          ".videoFrame video.video"
-        )
-      );
-
-      let bestVideo: HTMLVideoElement | null = null;
-      let bestRatio = 0;
-
-      videos.forEach((item) => {
-        const rect = item.getBoundingClientRect();
-
-        const visibleHeight = Math.max(
-          0,
-          Math.min(rect.bottom, window.innerHeight) -
-            Math.max(rect.top, 0)
-        );
-
-        const ratio =
-          rect.height > 0
-            ? visibleHeight / rect.height
-            : 0;
-
-        if (ratio >= 0.5 && ratio > bestRatio) {
-          bestRatio = ratio;
-          bestVideo = item;
-        }
-      });
-
-      videos.forEach((item) => {
-       
-if (item === bestVideo) {
-  if (item === video && manuallyPausedRef.current) {
-    return;
-  }
-
-  if (item.paused) {
-    item.play().catch(() => {});
-  }
-} else {
-  if (!item.paused) {
-    item.pause();
-  }
-}
-});
-};
-    // 스크롤하거나 화면 크기가 바뀔 때 확인
-    window.addEventListener("scroll", updatePlayback, {
-      passive: true,
-    });
-    window.addEventListener("resize", updatePlayback);
-
-    // 처음 화면에 나타났을 때 확인
-    const observer = new IntersectionObserver(
-      updatePlayback,
-      { threshold: [0, 0.5, 1] }
+    const videos = Array.from(
+      document.querySelectorAll<HTMLVideoElement>(
+        ".videoFrame video.video"
+      )
     );
 
-    observer.observe(video);
-    updatePlayback();
+    let bestVideo: HTMLVideoElement | null = null;
+    let bestRatio = 0;
 
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", updatePlayback);
-      window.removeEventListener("resize", updatePlayback);
-      video.pause();
-    };
-  }, []);
+    videos.forEach((item) => {
+      const rect = item.getBoundingClientRect();
+
+      const visibleHeight = Math.max(
+        0,
+        Math.min(rect.bottom, window.innerHeight) -
+          Math.max(rect.top, 0)
+      );
+
+      const ratio =
+        rect.height > 0
+          ? visibleHeight / rect.height
+          : 0;
+
+      if (ratio > bestRatio) {
+        bestRatio = ratio;
+        bestVideo = item;
+      }
+    });
+
+    const activeVideo: HTMLVideoElement | null =
+  bestRatio >= 0.35
+    ? (bestVideo as HTMLVideoElement | null)
+    : null;
+
+    videos.forEach((item) => {
+      if (item !== activeVideo) {
+        if (!item.paused) {
+          item.pause();
+        }
+        return;
+      }
+
+      // 사용자가 직접 정지한 영상은 자동 재생하지 않음
+      if (item === video && manuallyPausedRef.current) {
+        return;
+      }
+
+      if (item.paused) {
+        item.play().catch(() => {
+          // 브라우저 자동 재생 제한
+        });
+      }
+    });
+  };
+
+  const scheduleUpdate = () => {
+    cancelAnimationFrame(animationFrame);
+    animationFrame = requestAnimationFrame(updatePlayback);
+  };
+
+  window.addEventListener("scroll", scheduleUpdate, {
+    passive: true,
+  });
+
+  window.addEventListener("resize", scheduleUpdate);
+
+  const observer = new IntersectionObserver(
+    scheduleUpdate,
+    {
+      threshold: [0, 0.35, 0.5, 0.75, 1],
+    }
+  );
+
+  observer.observe(video);
+
+  scheduleUpdate();
+
+  return () => {
+    observer.disconnect();
+
+    window.removeEventListener(
+      "scroll",
+      scheduleUpdate
+    );
+
+    window.removeEventListener(
+      "resize",
+      scheduleUpdate
+    );
+
+    cancelAnimationFrame(animationFrame);
+    video.pause();
+  };
+}, []);
+
+ 
 
   
 return (
