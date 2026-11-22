@@ -802,9 +802,6 @@ const categoryMatch =
   <p>{p.description}</p>
 </div>
 
-<div className="commissionLabel">
-  <span>♧ 수수료 지급</span>
-</div>
 
 </div>
 
@@ -839,7 +836,9 @@ const categoryMatch =
   </div>
 </div>
 
-
+<div className="commissionLabel">
+  <span>♧ 수수료 지급</span>
+</div>
 <div className="productInfo">
 
                     <div className="productMeta">
