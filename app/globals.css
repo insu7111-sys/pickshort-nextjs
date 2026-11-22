@@ -1031,3 +1031,76 @@
     line-height: 1.5;
   }
 }
+
+
+/* =========================================
+   165단계 - 픽숏 모바일 카테고리 메뉴 개선
+========================================= */
+
+@media (max-width: 520px) {
+
+  .categories {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 12px;
+
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+
+    padding: 12px 16px 15px;
+
+    /* 오른쪽에 추가 메뉴가 있음을 보여주는 효과 */
+    -webkit-mask-image: linear-gradient(
+      to right,
+      #000 0%,
+      #000 88%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      #000 0%,
+      #000 88%,
+      transparent 100%
+    );
+  }
+
+  .category {
+    flex: 0 0 auto;
+    min-height: 44px;
+    white-space: nowrap;
+    scroll-snap-align: start;
+
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 600;
+
+    touch-action: manipulation;
+  }
+
+  .category.active {
+    font-weight: 800;
+  }
+}
+
+/* =========================================
+   167단계 - 모바일 쇼츠 세로 스크롤 자동 정렬
+========================================= */
+
+@media (max-width: 768px) {
+  html {
+    scroll-snap-type: y mandatory !important;
+    scroll-padding-top: 112px;
+  }
+
+  .shortCard {
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
+  }
+}
