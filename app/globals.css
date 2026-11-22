@@ -1190,3 +1190,144 @@
     overflow: hidden;
   }
 }
+/* 183-14단계: 모바일 건강·미용·생활 추천 글씨 위치 개선 */
+@media (max-width: 768px) {
+  .videoFrame .tag {
+    position: absolute !important;
+    top: 14px !important;
+    left: 12px !important;
+    z-index: 60 !important;
+
+    display: inline-flex;
+    align-items: center;
+
+    padding: 7px 12px !important;
+    border-radius: 20px;
+
+    background: rgba(0, 0, 0, 0.82) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    line-height: 1.4;
+    white-space: nowrap;
+  }
+}
+/* 183-15단계: 카테고리 메뉴와 영상 겹침 방지 */
+@media (max-width: 768px) {
+  .categories {
+    margin-bottom: 24px !important;
+  }
+
+  .feed {
+    padding-top: 8px !important;
+  }
+}
+/* 183-16단계: 고정 메뉴 아래 쇼츠 정렬 위치 조정 */
+@media (max-width: 768px) {
+  html {
+    scroll-padding-top: 145px !important;
+  }
+
+  .shortCard {
+    scroll-margin-top: 145px;
+  }
+}
+/* 183-18단계: 모바일 추천 문구 가림 현상 개선 */
+@media (max-width: 768px) {
+  .videoFrame .tag {
+    top: 42px !important;
+    left: 12px !important;
+    z-index: 60 !important;
+    background: rgba(0, 0, 0, 0.85) !important;
+    color: #ffffff !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    padding: 7px 12px !important;
+    border-radius: 20px;
+  }
+}
+/* 183-20단계: 모바일 쇼츠 상단 메뉴 겹침 개선 */
+@media (max-width: 768px) {
+  html {
+    scroll-padding-top: 180px !important;
+  }
+
+  .shortCard {
+    scroll-margin-top: 180px !important;
+  }
+
+  .categories {
+    z-index: 25;
+  }
+
+  .videoFrame .tag {
+    top: 14px !important;
+    left: 12px !important;
+    z-index: 60 !important;
+  }
+}
+/* 183-22단계: 모바일 쇼츠 상단 가림 현상 수정 */
+@media (max-width: 768px) {
+  html {
+    scroll-padding-top: 0 !important;
+  }
+
+  .shortCard {
+    scroll-margin-top: 0 !important;
+    scroll-snap-align: none !important;
+  }
+
+  .categories {
+    position: relative !important;
+    top: auto !important;
+  }
+}
+/* 183-23단계: 추천 문구를 영상 아래에 표시 */
+.shortCategoryLabel {
+  padding: 8px 12px;
+  background: #15191f;
+  color: #ffcf33;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+/* 183-29단계: 모바일 추천 문구 표시 및 겹침 방지 */
+@media (max-width: 768px) {
+ .shortCategoryLabel {
+  display: block !important;
+  position: static !important;
+  float: none !important;
+  clear: both !important;
+
+  width: 100% !important;
+  height: auto !important;
+  min-height: 36px !important;
+
+  margin: 0 !important;
+  padding: 10px 14px !important;
+
+  background: #15191f !important;
+  color: #ffcf33 !important;
+
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  line-height: 1.4 !important;
+
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+  .shortCard {
+  scroll-snap-align: start !important;
+  scroll-snap-stop: normal !important;
+  scroll-margin-top: 0 !important;
+}
+
+html {
+  scroll-snap-type: y mandatory !important;
+  scroll-padding-top: 112px !important;
+}
+}

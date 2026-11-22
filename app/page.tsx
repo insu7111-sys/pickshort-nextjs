@@ -695,9 +695,12 @@ const categoryMatch =
             {filtered.length ? (
               filtered.map((p) => (
                 <article className="shortCard" key={p.id}>
-                  <div
-                    className="videoFrame"
-                    style={{
+
+  
+
+  <div
+    className="videoFrame"
+                      style={{
                       background: p.background,
                       position: "relative",
                     }}
@@ -735,9 +738,7 @@ const categoryMatch =
                       </div>
                     )}
 
-                    <span className="tag">
-                      {p.category} 추천
-                    </span>
+                    
 
                     {/* 왼쪽 중간 쇼핑 상품 이미지 */}
                     {p.imageUrl &&
@@ -805,6 +806,10 @@ const categoryMatch =
 
 </div>
 
+{/* 쇼츠 카테고리 추천 표시 */}
+<div className="shortCategoryLabel">
+  {p.category} 추천
+</div>
 
 <div className="channelSubscribe">
   <div className="channelIdentity">
