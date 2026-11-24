@@ -847,9 +847,24 @@ const categoryMatch =
 <div className="productInfo">
 
                     <div className="productMeta">
-                      <span className="price">
-                        {p.priceLabel || "가격 확인"}
-                      </span>
+                      {hasAffiliate(p.affiliateUrl) ? (
+  <a
+    className="price"
+    href={p.affiliateUrl}
+    target="_blank"
+    rel="sponsored nofollow noopener noreferrer"
+    style={{
+      textDecoration: "none",
+      cursor: "pointer",
+    }}
+  >
+    {p.priceLabel || "가격 확인"}
+  </a>
+) : (
+  <span className="price">
+    {p.priceLabel || "가격 확인"}
+  </span>
+)}
 
                       {hasAffiliate(p.affiliateUrl) ? (
                         <a
