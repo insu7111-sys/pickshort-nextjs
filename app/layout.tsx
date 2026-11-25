@@ -7,7 +7,7 @@ export const metadata: Metadata = {
 
   title: "픽숏 PickShort | 추천 상품 숏츠 쇼핑",
 
-  description: "픽숏(PickShort)은 건강, 미용, 생활, 가전·도구 추천 상품을 숏츠 영상으로 소개합니다. 유용한 상품 정보를 확인하고 쿠팡에서 간편하게 쇼핑하세요.",
+    description: "픽숏(PickShort)은 건강, 미용, 생활, 가전·도구 추천 상품을 숏츠 영상으로 소개하고 쿠팡 쇼핑을 연결합니다.",
 
   applicationName: "픽숏 PickShort",
 
