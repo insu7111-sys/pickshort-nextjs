@@ -1178,6 +1178,7 @@
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
   }
 
@@ -1185,9 +1186,10 @@
     font-size: 11px !important;
     line-height: 1.4 !important;
     display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
+ -webkit-box-orient: vertical;
+-webkit-line-clamp: 2;
+line-clamp: 2;
+overflow: hidden;
   }
 }
 /* 183-14단계: 모바일 건강·미용·생활 추천 글씨 위치 개선 */

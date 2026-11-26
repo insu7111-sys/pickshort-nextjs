@@ -4,7 +4,7 @@
 
 
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 
 import { createClient } from "@/utils/supabase/client";
@@ -74,7 +74,123 @@ const [indexNowResult, setIndexNowResult] = useState<{
 } | null>(null);
 
 const [indexNowRequests, setIndexNowRequests] = useState(0);
+// IndexNow 저장 상태 관리
+const [indexNowStatus, setIndexNowStatus] = useState<{
+  success: boolean;
+  found: boolean;
+  pending: boolean;
+  site_url: string;
+  is_locked: boolean;
+  is_rate_limited: boolean;
+  last_status: number | null;
+  last_error: string | null;
+  last_attempt_at: string | null;
+  last_success_at: string | null;
+  next_attempt_at: string | null;
+  locked_until: string | null;
+  change_version: string;
+  server_now: string;
+  server_time: string;
+} | null>(null);
 
+const [indexNowStatusLoading, setIndexNowStatusLoading] =
+  useState(true);
+
+const [indexNowStatusError, setIndexNowStatusError] =
+  useState("");
+
+const [indexNowClock, setIndexNowClock] =
+  useState(Date.now());
+
+const [indexNowClockOffset, setIndexNowClockOffset] =
+  useState(0);
+
+const indexNowStatusRequestId = useRef(0);
+
+// Supabase에 저장된 IndexNow 상태 불러오기
+const loadIndexNowStatus = useCallback(async () => {
+  const requestId = ++indexNowStatusRequestId.current;
+
+  setIndexNowStatusLoading(true);
+  setIndexNowStatusError("");
+
+  try {
+    const response = await fetch("/api/indexnow", {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.success !== true) {
+      throw new Error(
+        result.message ?? "IndexNow 상태 조회 실패"
+      );
+    }
+
+    if (requestId !== indexNowStatusRequestId.current) {
+      return;
+    }
+
+    const serverTime = Date.parse(
+      result.server_now || result.server_time
+    );
+
+    const clientTime = Date.now();
+
+    setIndexNowClockOffset(
+      Number.isFinite(serverTime)
+        ? serverTime - clientTime
+        : 0
+    );
+
+    setIndexNowClock(clientTime);
+    setIndexNowStatus(result);
+  } catch (error) {
+    if (requestId !== indexNowStatusRequestId.current) {
+      return;
+    }
+
+    console.error("IndexNow 상태 조회 오류:", error);
+
+    setIndexNowStatusError(
+      error instanceof Error
+        ? error.message
+        : "IndexNow 상태 조회 중 오류가 발생했습니다."
+    );
+  } finally {
+    if (requestId === indexNowStatusRequestId.current) {
+      setIndexNowStatusLoading(false);
+    }
+  }
+}, []);
+
+// 관리자 로그인 후 저장 상태 자동 조회
+useEffect(() => {
+  if (authLoading || !isAdmin) {
+    return;
+  }
+
+  void loadIndexNowStatus();
+
+  return () => {
+    indexNowStatusRequestId.current += 1;
+  };
+}, [authLoading, isAdmin, loadIndexNowStatus]);
+
+// 재시도 카운트다운을 위한 1초 타이머
+useEffect(() => {
+  if (authLoading || !isAdmin) {
+    return;
+  }
+
+  const timer = window.setInterval(() => {
+    setIndexNowClock(Date.now());
+  }, 1000);
+
+  return () => window.clearInterval(timer);
+}, [authLoading, isAdmin]);
 const notifyIndexNow = async (isRetry = false) => {
   if (
     window.location.origin !==
@@ -121,8 +237,12 @@ const notifyIndexNow = async (isRetry = false) => {
       success: false,
       message: "IndexNow 요청 중 오류가 발생했습니다.",
     });
-  } finally {
-    setIndexNowRequests((count) => Math.max(0, count - 1));
+   } finally {
+    try {
+      await loadIndexNowStatus();
+    } finally {
+      setIndexNowRequests((count) => Math.max(0, count - 1));
+    }
   }
 };
 
@@ -655,7 +775,81 @@ const handleTogglePublished = async (
 
 
 
+// IndexNow 재시도 가능 시간 계산
+const indexNowCurrentTime =
+  indexNowClock + indexNowClockOffset;
 
+const indexNowNextAttemptTime =
+  indexNowStatus?.next_attempt_at
+    ? Date.parse(indexNowStatus.next_attempt_at)
+    : 0;
+
+const indexNowLockedUntil =
+  indexNowStatus?.locked_until
+    ? Date.parse(indexNowStatus.locked_until)
+    : 0;
+
+const indexNowRemainingSeconds = Math.max(
+  0,
+  Math.ceil(
+    (
+      Math.max(
+        indexNowNextAttemptTime,
+        indexNowLockedUntil
+      ) - indexNowCurrentTime
+    ) / 1000
+  )
+);
+
+const indexNowCountdown =
+  String(
+    Math.floor(indexNowRemainingSeconds / 60)
+  ).padStart(2, "0") +
+  ":" +
+  String(
+    indexNowRemainingSeconds % 60
+  ).padStart(2, "0");
+
+// 실제 운영 사이트 여부 확인
+const isIndexNowProduction =
+  typeof window !== "undefined" &&
+  window.location.origin ===
+    "https://pickshort-nextjs-y3hl.vercel.app";
+
+// IndexNow 재시도 버튼 활성화 조건
+const canRetryIndexNow =
+  isIndexNowProduction &&
+  !indexNowStatusLoading &&
+  !indexNowStatusError &&
+  indexNowRequests === 0 &&
+  indexNowStatus?.found === true &&
+  indexNowStatus?.pending === true &&
+  indexNowRemainingSeconds === 0 &&
+  (
+    !indexNowStatus.is_locked ||
+    (
+      indexNowLockedUntil > 0 &&
+      indexNowLockedUntil <= indexNowCurrentTime
+    )
+  );
+
+// 한국 시간 표시
+const formatIndexNowTime = (
+  value?: string | null
+) => {
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "-";
+  }
+
+  return date.toLocaleString("ko-KR", {
+    timeZone: "Asia/Seoul",
+    hour12: false,
+  });
+};
 if (authLoading) {
   return (
     <main style={{ padding: 40, textAlign: "center" }}>
@@ -717,78 +911,246 @@ return (
     🔍 IndexNow 검색엔진 제출 관리
   </h2>
 
+  {indexNowStatusLoading && (
+    <p style={{ color: "#2563eb" }}>
+      저장된 제출 상태를 불러오는 중...
+    </p>
+  )}
+
+  {indexNowStatusError && (
+    <p style={{ color: "#dc2626" }}>
+      상태 조회 오류: {indexNowStatusError}
+    </p>
+  )}
+
   <p>
     제출 상태:{" "}
-    <strong>
+    <strong
+      style={{
+        color: indexNowStatusError
+          ? "#dc2626"
+          : indexNowStatus?.pending
+          ? "#d97706"
+          : "#16a34a",
+      }}
+    >
       {indexNowRequests > 0
         ? "제출 진행 중..."
-        : !indexNowResult
-        ? "제출 결과 없음"
-        : indexNowResult.reason === "no_pending"
-        ? "제출할 변경 사항 없음"
-        : indexNowResult.skipped
-        ? "제출 보류"
-        : indexNowResult.success
-        ? "제출 완료"
-        : "제출 실패"}
+        : indexNowStatusLoading
+        ? "상태 확인 중..."
+        : indexNowStatusError
+        ? "상태 조회 실패"
+        : !indexNowStatus?.found
+        ? "제출 기록 없음"
+        : indexNowStatus.pending
+        ? "🟡 미제출 변경 사항 있음"
+        : indexNowStatus.last_status === 200 ||
+          indexNowStatus.last_status === 202
+        ? "🟢 제출 완료"
+        : indexNowStatus.last_status === null
+        ? "제출 기록 없음"
+        : "마지막 제출 실패"}
     </strong>
   </p>
 
-  {indexNowResult && (
-    <>
-      <p>
-        응답 코드: {indexNowResult.status ?? "-"}
-      </p>
+  <p>
+    응답 코드:{" "}
+    <strong>
+      {indexNowStatus?.last_status != null
+        ? `HTTP ${indexNowStatus.last_status}`
+        : "-"}
+    </strong>
+  </p>
 
-      <p>
-        미제출 변경 사항:{" "}
-        {indexNowResult.pending === true
-          ? "있음"
-          : indexNowResult.pending === false
-          ? "없음"
-          : "확인되지 않음"}
-      </p>
+  <p>
+    마지막 제출 시도:{" "}
+    {formatIndexNowTime(
+      indexNowStatus?.last_attempt_at
+    )}
+  </p>
 
-      <p>
-        다음 재시도 시간:{" "}
-        {indexNowResult.retry_at ||
-        indexNowResult.next_attempt_at
-          ? new Date(
-              indexNowResult.retry_at ||
-              indexNowResult.next_attempt_at ||
-              ""
-            ).toLocaleString("ko-KR")
-          : "-"}
-      </p>
+  <p>
+    마지막 제출 성공:{" "}
+    {formatIndexNowTime(
+      indexNowStatus?.last_success_at
+    )}
+  </p>
 
-      <p>{indexNowResult.message}</p>
-    </>
-  )}
+  <p>
+    미제출 변경 사항:{" "}
+    <strong>
+      {indexNowStatus?.pending === true
+        ? "있음"
+        : indexNowStatus?.pending === false
+        ? "없음"
+        : "확인되지 않음"}
+    </strong>
+  </p>
 
-  <button
-    type="button"
-    disabled={indexNowRequests > 0}
-    onClick={() => void notifyIndexNow(true)}
+  <p>
+    제출 잠금 상태:{" "}
+    {!indexNowStatus?.found
+      ? "확인되지 않음"
+      : indexNowStatus.is_locked &&
+        (
+          indexNowLockedUntil === 0 ||
+          indexNowLockedUntil > indexNowCurrentTime
+        )
+      ? "잠금 중"
+      : "해제"}
+  </p>
+
+  <p>
+    다음 재시도 시간:{" "}
+    {formatIndexNowTime(
+      indexNowStatus?.next_attempt_at
+    )}
+  </p>
+
+  <p>
+    변경 버전:{" "}
+    {indexNowStatus?.change_version ?? "-"}
+  </p>
+
+  <p>
+    마지막 오류:{" "}
+    {indexNowStatus?.found
+      ? indexNowStatus.last_error || "없음"
+      : "-"}
+  </p>
+
+  <div
     style={{
-      padding: "10px 18px",
-      background:
-        indexNowRequests > 0
-          ? "#9ca3af"
-          : "#2563eb",
-      color: "white",
-      border: "none",
-      borderRadius: 8,
-      cursor:
-        indexNowRequests > 0
-          ? "not-allowed"
-          : "pointer",
-      fontWeight: "bold",
+      background: "#e2e8f0",
+      borderRadius: 10,
+      padding: 16,
+      textAlign: "center",
+      marginTop: 16,
+      marginBottom: 16,
     }}
   >
-    {indexNowRequests > 0
-      ? "제출 진행 중..."
-      : "🔄 IndexNow 재시도"}
-  </button>
+    <div style={{ fontSize: 14 }}>
+      남은 대기 시간
+    </div>
+
+    <div
+      style={{
+        fontSize: 32,
+        fontWeight: "bold",
+        color: indexNowRemainingSeconds > 0
+          ? "#d97706"
+          : "#16a34a",
+        fontVariantNumeric: "tabular-nums",
+      }}
+    >
+      {indexNowStatus?.found &&
+      !indexNowStatusError
+        ? indexNowCountdown
+        : "--:--"}
+    </div>
+  </div>
+
+  <div
+    style={{
+      display: "flex",
+      flexWrap: "wrap",
+      gap: 10,
+    }}
+  >
+    <button
+      type="button"
+      disabled={
+        indexNowStatusLoading ||
+        indexNowRequests > 0
+      }
+      onClick={() => void loadIndexNowStatus()}
+      style={{
+        flex: "1 1 160px",
+        padding: "12px 16px",
+        background:
+          indexNowStatusLoading ||
+          indexNowRequests > 0
+            ? "#9ca3af"
+            : "#2563eb",
+        color: "#fff",
+        border: "none",
+        borderRadius: 8,
+        fontWeight: "bold",
+        cursor:
+          indexNowStatusLoading ||
+          indexNowRequests > 0
+            ? "not-allowed"
+            : "pointer",
+      }}
+    >
+      🔄 상태 새로고침
+    </button>
+
+    <button
+      type="button"
+      disabled={!canRetryIndexNow}
+      onClick={() => void notifyIndexNow(true)}
+      style={{
+        flex: "1 1 160px",
+        padding: "12px 16px",
+        background: canRetryIndexNow
+          ? "#16a34a"
+          : "#9ca3af",
+        color: "#fff",
+        border: "none",
+        borderRadius: 8,
+        fontWeight: "bold",
+        cursor: canRetryIndexNow
+          ? "pointer"
+          : "not-allowed",
+      }}
+    >
+      {indexNowRequests > 0
+        ? "제출 진행 중..."
+        : "🔄 IndexNow 재시도"}
+    </button>
+  </div>
+
+  <p
+    style={{
+      fontSize: 13,
+      color: "#64748b",
+      marginTop: 12,
+    }}
+  >
+    {!isIndexNowProduction
+      ? "실제 운영 사이트에서만 제출할 수 있습니다."
+      : indexNowRequests > 0
+      ? "제출 요청을 처리하고 있습니다."
+      : indexNowStatusLoading
+      ? "저장 상태를 확인하고 있습니다."
+      : indexNowStatusError
+      ? "상태 새로고침 후 다시 확인해주세요."
+      : !indexNowStatus?.found
+      ? "저장된 제출 기록이 없습니다."
+      : !indexNowStatus.pending
+      ? "제출할 변경 사항이 없습니다."
+      : indexNowRemainingSeconds > 0
+      ? "대기 시간이 지나면 재시도할 수 있습니다."
+      : canRetryIndexNow
+      ? "지금 재시도할 수 있습니다."
+      : "현재 제출할 수 없습니다."}
+  </p>
+
+  {indexNowResult && (
+    <p
+      style={{
+        fontSize: 13,
+        color: "#475569",
+        background: "#fff",
+        padding: 10,
+        borderRadius: 8,
+        overflowWrap: "anywhere",
+      }}
+    >
+      최근 요청 결과: {indexNowResult.message}
+    </p>
+  )}
 </section>
       <p>새로운 쇼츠 상품을 등록하는 화면입니다.</p>
 

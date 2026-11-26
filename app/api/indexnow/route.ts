@@ -12,6 +12,98 @@ const INDEXNOW_ENDPOINT =
 
 export const runtime = "nodejs";
 
+// IndexNow 저장 상태 조회 API
+export async function GET() {
+  try {
+    const headers = {
+      "Cache-Control": "private, no-store",
+    };
+
+    // 1. Supabase 서버 인증
+    const supabase = await createClient();
+
+    const { data: userData, error: userError } =
+      await supabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "로그인이 필요합니다.",
+        },
+        { status: 401, headers }
+      );
+    }
+
+    // 2. 관리자 권한 확인
+    const { data: adminData, error: adminError } =
+      await supabase.rpc("is_admin");
+
+    if (adminError || adminData !== true) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "관리자 권한이 필요합니다.",
+        },
+        { status: 403, headers }
+      );
+    }
+
+    // 3. Supabase에 저장된 IndexNow 상태 조회
+    const { data: statusData, error: statusError } =
+      await supabase.rpc("indexnow_get_status");
+
+    if (statusError || !statusData) {
+      console.error(
+        "IndexNow 상태 조회 실패:",
+        statusError
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "IndexNow 상태 조회에 실패했습니다.",
+        },
+        {
+          status:
+            statusError?.code === "42501" ? 403 : 500,
+          headers,
+        }
+      );
+    }
+
+    // 4. 저장된 상태 반환
+    return NextResponse.json(
+      {
+        success: true,
+        ...statusData,
+        server_time: new Date().toISOString(),
+      },
+      {
+        status: 200,
+        headers,
+      }
+    );
+  } catch (error) {
+    console.error(
+      "IndexNow 상태 조회 API 오류:",
+      error
+    );
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "상태 조회 중 오류가 발생했습니다.",
+      },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "private, no-store",
+        },
+      }
+    );
+  }
+}
 export async function POST(request: NextRequest) {
   try {
     // 1. 동일 출처 요청 확인
