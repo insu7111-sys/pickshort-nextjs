@@ -62,6 +62,71 @@ useEffect(() => {
 
 const supabase = createClient();
 
+const [indexNowResult, setIndexNowResult] = useState<{
+  success: boolean;
+  skipped?: boolean;
+  reason?: string;
+  status?: number;
+  pending?: boolean;
+  retry_at?: string | null;
+  next_attempt_at?: string | null;
+  message: string;
+} | null>(null);
+
+const [indexNowRequests, setIndexNowRequests] = useState(0);
+
+const notifyIndexNow = async (isRetry = false) => {
+  if (
+    window.location.origin !==
+    "https://pickshort-nextjs-y3hl.vercel.app"
+  ) {
+    setIndexNowResult({
+      success: false,
+      skipped: true,
+      message: "실제 운영 사이트에서만 제출할 수 있습니다.",
+    });
+    return;
+  }
+
+  setIndexNowRequests((count) => count + 1);
+
+  try {
+    const response = await fetch(
+      isRetry ? "/api/indexnow?retry=1" : "/api/indexnow",
+      {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      }
+    );
+
+    const result = await response.json();
+
+    setIndexNowResult({
+      success: response.ok && result.success === true,
+      skipped: result.skipped,
+      reason: result.reason,
+      status: result.status,
+      pending: result.pending,
+      retry_at: result.retry_at ?? null,
+      next_attempt_at: result.next_attempt_at ?? null,
+      message: result.message ?? "제출 결과를 확인해주세요.",
+    });
+
+    console.log("IndexNow 제출 결과:", result);
+  } catch (error) {
+    console.warn("IndexNow 제출 오류:", error);
+
+    setIndexNowResult({
+      success: false,
+      message: "IndexNow 요청 중 오류가 발생했습니다.",
+    });
+  } finally {
+    setIndexNowRequests((count) => Math.max(0, count - 1));
+  }
+};
+
+
 useEffect(() => {
   const checkAdmin = async () => {
     setAuthLoading(true);
@@ -195,14 +260,26 @@ image_url: imageUrl,
   is_published: true,
 });
 
+
 if (error) {
   alert("상품 등록 실패: " + error.message);
   return;
 }
 
+// 실제 운영 사이트에서만 IndexNow 자동 제출
+if (
+  window.location.origin ===
+  "https://pickshort-nextjs-y3hl.vercel.app"
+) {
+  void notifyIndexNow();
+}
+
+
+
 await loadProducts();
 
 alert("상품이 성공적으로 등록되었습니다!");
+
 ;
 };
 
@@ -322,6 +399,26 @@ const handleUpdateProduct = async () => {
     updates.image_url = imageData.publicUrl;
   }
 
+// 기존 상품과 수정할 상품 정보 비교
+const hasProductChanges =
+  currentProduct.title !== updates.title ||
+  currentProduct.category !== updates.category ||
+  (currentProduct.description ?? "") !== updates.description ||
+  currentProduct.affiliate_url !== updates.affiliate_url ||
+  (
+    updates.video_url !== undefined &&
+    currentProduct.video_url !== updates.video_url
+  ) ||
+  (
+    updates.image_url !== undefined &&
+    currentProduct.image_url !== updates.image_url
+  );
+
+// 공개 상품의 정보가 변경된 경우에만 IndexNow 제출 대상
+const shouldNotifyIndexNow =
+  currentProduct.is_published === true &&
+  hasProductChanges;
+
   // 상품 정보와 새 영상·이미지 주소 저장
   const { data, error } = await supabase
     .from("products")
@@ -338,6 +435,15 @@ const handleUpdateProduct = async () => {
     alert("상품이 수정되지 않았습니다. 관리자 권한을 확인해주세요.");
     return;
   }
+
+// 공개 상품의 실제 변경 및 운영 사이트 여부 확인
+if (
+  shouldNotifyIndexNow &&
+  window.location.origin ===
+    "https://pickshort-nextjs-y3hl.vercel.app"
+) {
+  void notifyIndexNow();
+}
 
   await loadProducts();
 
@@ -360,7 +466,7 @@ const handleDeleteProduct = async (productId: string) => {
 
   const { data: product, error: fetchError } = await supabase
     .from("products")
-    .select("id, video_url, image_url")
+    .select("id, video_url, image_url, is_published")
     .eq("id", productId)
     .single();
 
@@ -415,6 +521,16 @@ const handleDeleteProduct = async (productId: string) => {
     alert("상품이 삭제되지 않았습니다.");
     return;
   }
+
+// 공개 상품 삭제 성공 시 운영 사이트에서만 IndexNow 자동 제출
+if (
+  product.is_published === true &&
+  window.location.origin ===
+    "https://pickshort-nextjs-y3hl.vercel.app"
+) {
+  void notifyIndexNow();
+}
+
 
   const cleanupFile = async (
     bucket: string,
@@ -493,6 +609,7 @@ const fileIsUsed = (remaining ?? []).some((item) => {
   }
 };
 
+
 const handleTogglePublished = async (
   productId: string,
   currentStatus: boolean
@@ -505,6 +622,7 @@ const handleTogglePublished = async (
       is_published: newStatus,
     })
     .eq("id", productId)
+    .eq("is_published", currentStatus)
     .select("id");
 
   if (error) {
@@ -513,8 +631,17 @@ const handleTogglePublished = async (
   }
 
   if (!data || data.length === 0) {
-    alert("공개 상태가 변경되지 않았습니다. 관리자 권한을 확인해주세요.");
+    await loadProducts();
+    alert("공개 상태가 변경되지 않았습니다. 이미 변경되었거나 관리자 권한을 확인해야 합니다.");
     return;
+  }
+
+  // 상품 공개 상태 변경 성공 시 운영 사이트에서만 IndexNow 자동 제출
+  if (
+    window.location.origin ===
+      "https://pickshort-nextjs-y3hl.vercel.app"
+  ) {
+    void notifyIndexNow();
   }
 
   await loadProducts();
@@ -525,6 +652,7 @@ const handleTogglePublished = async (
       : "상품이 비공개로 변경되었습니다!"
   );
 };
+
 
 
 
@@ -575,7 +703,93 @@ return (
 >
   🚪 로그아웃
 </button>
+<section
+  style={{
+    border: "1px solid #d1d5db",
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 24,
+    background: "#f8fafc",
+    color: "#111827",
+  }}
+>
+  <h2 style={{ marginTop: 0 }}>
+    🔍 IndexNow 검색엔진 제출 관리
+  </h2>
 
+  <p>
+    제출 상태:{" "}
+    <strong>
+      {indexNowRequests > 0
+        ? "제출 진행 중..."
+        : !indexNowResult
+        ? "제출 결과 없음"
+        : indexNowResult.reason === "no_pending"
+        ? "제출할 변경 사항 없음"
+        : indexNowResult.skipped
+        ? "제출 보류"
+        : indexNowResult.success
+        ? "제출 완료"
+        : "제출 실패"}
+    </strong>
+  </p>
+
+  {indexNowResult && (
+    <>
+      <p>
+        응답 코드: {indexNowResult.status ?? "-"}
+      </p>
+
+      <p>
+        미제출 변경 사항:{" "}
+        {indexNowResult.pending === true
+          ? "있음"
+          : indexNowResult.pending === false
+          ? "없음"
+          : "확인되지 않음"}
+      </p>
+
+      <p>
+        다음 재시도 시간:{" "}
+        {indexNowResult.retry_at ||
+        indexNowResult.next_attempt_at
+          ? new Date(
+              indexNowResult.retry_at ||
+              indexNowResult.next_attempt_at ||
+              ""
+            ).toLocaleString("ko-KR")
+          : "-"}
+      </p>
+
+      <p>{indexNowResult.message}</p>
+    </>
+  )}
+
+  <button
+    type="button"
+    disabled={indexNowRequests > 0}
+    onClick={() => void notifyIndexNow(true)}
+    style={{
+      padding: "10px 18px",
+      background:
+        indexNowRequests > 0
+          ? "#9ca3af"
+          : "#2563eb",
+      color: "white",
+      border: "none",
+      borderRadius: 8,
+      cursor:
+        indexNowRequests > 0
+          ? "not-allowed"
+          : "pointer",
+      fontWeight: "bold",
+    }}
+  >
+    {indexNowRequests > 0
+      ? "제출 진행 중..."
+      : "🔄 IndexNow 재시도"}
+  </button>
+</section>
       <p>새로운 쇼츠 상품을 등록하는 화면입니다.</p>
 
       <div style={{ display: "grid", gap: 16 }}>
